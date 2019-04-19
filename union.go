@@ -28,11 +28,16 @@ func (sqf *SUnionQueryField) Label(label string) IQueryField {
 }
 
 type SUnionQuery struct {
-	queries []IQuery
-	fields  []IQueryField
-	orderBy []SQueryOrder
-	limit   int
-	offset  int
+	queries  []IQuery
+	unionAll bool
+	fields   []IQueryField
+	orderBy  []SQueryOrder
+	limit    int
+	offset   int
+}
+
+func (uq *SUnionQuery) UnionAll(unionAll bool) string {
+	uq.unionAll = unionAll
 }
 
 func (uq *SUnionQuery) String() string {
@@ -40,6 +45,9 @@ func (uq *SUnionQuery) String() string {
 	for i := range uq.queries {
 		if i != 0 {
 			buf.WriteString(" UNION ")
+			if uq.unionAll {
+				buf.WriteString("ALL ")
+			}
 		}
 		buf.WriteByte('(')
 		buf.WriteString(uq.queries[i].String())
