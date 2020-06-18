@@ -19,6 +19,24 @@ import (
 	"testing"
 )
 
+func TestTableSpecDataGet(t *testing.T) {
+	type S struct {
+		Id   string
+		Zone string
+	}
+	ts := NewTableSpecFromStruct(S{}, "s")
+
+	for i := 0; i < 4; i++ {
+		el := ts.DataPoolGet().(*S)
+		if el.Id != "" || el.Zone != "" {
+			t.Fatalf("get none zero el: %#v", el)
+		}
+		el.Id = "id"
+		el.Zone = "zone"
+		ts.DataPoolPut(el)
+	}
+}
+
 func BenchmarkTableSpecDataGet(b *testing.B) {
 	type S struct {
 		Id   string
@@ -32,12 +50,11 @@ func BenchmarkTableSpecDataGet(b *testing.B) {
 	const sliceLen = 20
 
 	b.Run("pool", func(b *testing.B) {
-		b.ReportAllocs()
 		ts := NewTableSpecFromStruct(S{}, "s")
 		li := make([]interface{}, sliceLen)
 		for i := 0; i < b.N; i++ {
 			for i := range li {
-				li[i] = ts.DataPoolGet()
+				li[i] = ts.DataPoolGet().(*S)
 			}
 			for i := range li {
 				ts.DataPoolPut(li[i])
@@ -46,7 +63,6 @@ func BenchmarkTableSpecDataGet(b *testing.B) {
 	})
 
 	b.Run("reflect", func(b *testing.B) {
-		b.ReportAllocs()
 		ts := NewTableSpecFromStruct(S{}, "s")
 		li := make([]interface{}, sliceLen)
 		for i := 0; i < b.N; i++ {

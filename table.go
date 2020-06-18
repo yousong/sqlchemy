@@ -26,6 +26,7 @@ import (
 
 type STableSpec struct {
 	structType reflect.Type
+	structZero reflect.Value
 	structPool *sync.Pool
 	name       string
 	columns    []IColumnSpec
@@ -54,6 +55,7 @@ func NewTableSpecFromStruct(s interface{}, name string) *STableSpec {
 		columns:    []IColumnSpec{},
 		name:       name,
 		structType: st,
+		structZero: reflect.Zero(st),
 		structPool: &sync.Pool{
 			New: func() interface{} {
 				return reflect.New(st).Interface()
@@ -87,6 +89,7 @@ func (ts *STableSpec) DataPoolGet() interface{} {
 }
 
 func (ts *STableSpec) DataPoolPut(i interface{}) {
+	reflect.ValueOf(i).Elem().Set(ts.structZero)
 	ts.structPool.Put(i)
 }
 
