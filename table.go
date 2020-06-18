@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"sync"
 
 	"yunion.io/x/log"
 	"yunion.io/x/pkg/utils"
@@ -25,6 +26,7 @@ import (
 
 type STableSpec struct {
 	structType reflect.Type
+	structPool *sync.Pool
 	name       string
 	columns    []IColumnSpec
 	indexes    []STableIndex
@@ -52,6 +54,11 @@ func NewTableSpecFromStruct(s interface{}, name string) *STableSpec {
 		columns:    []IColumnSpec{},
 		name:       name,
 		structType: st,
+		structPool: &sync.Pool{
+			New: func() interface{} {
+				return reflect.New(st).Interface()
+			},
+		},
 	}
 	struct2TableSpec(val, table)
 	return table
@@ -73,6 +80,14 @@ func (ts *STableSpec) PrimaryColumns() []IColumnSpec {
 		}
 	}
 	return ret
+}
+
+func (ts *STableSpec) DataPoolGet() interface{} {
+	return ts.structPool.Get()
+}
+
+func (ts *STableSpec) DataPoolPut(i interface{}) {
+	ts.structPool.Put(i)
 }
 
 func (ts *STableSpec) DataType() reflect.Type {
